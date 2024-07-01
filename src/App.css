@@ -1,28 +1,50 @@
-.container {
-  justify-content: center;
-  align-items: center;
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f8f9fa;
 }
 
 .chat-container {
-  height: 300px;
+  max-height: 400px;
   overflow-y: auto;
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin-bottom: 15px;
+}
+
+.message-container {
+  display: flex;
+  margin-bottom: 10px;
 }
 
 .message {
-  padding: 8px 10px;
-  margin: 5px 0;
-  border-radius: 5px;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 60%;
+  word-wrap: break-word;
 }
 
-.message.user {
-  background-color: #d1ecf1;
-  text-align: right;
+.sent {
+  background-color: red;
+  color: white;
+  margin-left: auto;
 }
 
-.message.user2 {
-  background-color: #f8d7da;
-  text-align: left;
+.received {
+  background-color: blue;
+  color: white;
+  margin-right: auto;
+}
+
+.card {
+  margin-top: 20px;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-control {
+  flex: 1;
+}
+
+.btn {
+  margin-left: 10px;
 }

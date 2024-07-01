@@ -1,72 +1,163 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [inputUser1, setInputUser1] = useState('');
+  const [inputUser2, setInputUser2] = useState('');
 
-  // handling sent messages by user and receiving messages from user2
-  const handleSendMessage = () => {
-    if (input.trim()) {
-      const newMessages = [...messages, { text: input, sender: 'user' }];
-      setMessages(newMessages);
-      setInput('');
+  useEffect(() => {
+    fetchMessages();
+  }, []);
 
-      setTimeout(() => {
-        // Hardcode response from the user2
-        const user2Response = { text: 'This is a response from the other side.', sender: 'user2' };
-        setMessages((prevMessages) => [...prevMessages, user2Response]);
-      }, 1000);
+  const fetchMessages = () => {
+    fetch('http://localhost/adet-chat/api/api.php')
+      .then(response => response.json())
+      .then(data => {
+        setMessages(data);
+      })
+      .catch(error => console.error('Error fetching messages:', error));
+  };
+
+  const handleSendMessageUser1 = () => {
+    if (inputUser1.trim()) {
+      const newMessage = { text: inputUser1, sender: 'user1' };
+      saveMessage(newMessage);
+      setInputUser1('');
     }
   };
 
-  const handleKeyPress = (event) => {
+  const handleSendMessageUser2 = () => {
+    if (inputUser2.trim()) {
+      const newMessage = { text: inputUser2, sender: 'user2' };
+      saveMessage(newMessage);
+      setInputUser2('');
+    }
+  };
+
+  const saveMessage = (message) => {
+    fetch('http://localhost/adet-chat/api/api.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          fetchMessages();
+        } else {
+          console.error('Error saving message:', data.message);
+        }
+      })
+      .catch(error => console.error('Error saving message:', error));
+  };
+
+  const handleKeyPressUser1 = (event) => {
     if (event.key === 'Enter') {
-      handleSendMessage();
+      event.preventDefault();
+      handleSendMessageUser1();
     }
   };
 
-  const handleGetChat = () => {
-    // Clear previous messages and set new messages
-    const newMessages = [];
-    setMessages(newMessages);
+  const handleKeyPressUser2 = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleSendMessageUser2();
+    }
   };
+
+  const handleClearChat = () => {
+    fetch('http://localhost/adet-chat/api/api.php', {
+      method: 'DELETE'
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          setMessages([]);
+        } else {
+          console.error('Error clearing chat:', data.message);
+        }
+      })
+      .catch(error => console.error('Error clearing chat:', error));
+  };
+
+  const user1Messages = messages.filter(message => message.sender === 'user1');
+  const user2Messages = messages.filter(message => message.sender === 'user2');
 
   return (
     <div className="container mt-5">
-      <div className="card">
-        <div className="card-header">
-          <h5>Chat Application</h5>
-        </div>
-        <div className="card-body">
-          <div className="chat-container">
-            {messages.map((message, index) => (
-              <div key={index} className={`message ${message.sender}`}>
-                {message.text}
-              </div>
-            ))}
+      <div className="row">
+        <div className="col">
+          <div className="card">
+            <div className="card-header">
+              <h5>User 1 Window</h5>
+            </div>
+            <div className="card-body chat-container">
+              {messages.map((message, index) => (
+                <div key={index} className={`message-container ${message.sender === 'user1' ? 'text-right' : 'text-left'}`}>
+                  <div className={`message ${message.sender === 'user1' ? 'sent' : 'received'}`}>
+                    {message.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="card-footer d-flex">
+              <input
+                type="text"
+                className="form-control me-2"
+                placeholder="Type a message..."
+                value={inputUser1}
+                onChange={(e) => setInputUser1(e.target.value)}
+                onKeyPress={handleKeyPressUser1}
+              />
+              <button className="btn btn-primary me-2" onClick={handleSendMessageUser1}>
+                Send
+              </button>
+            </div>
           </div>
         </div>
-        <div className="card-footer d-flex">
-          <input
-            type="text"
-            className="form-control me-2"
-            placeholder="Type a message..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-          <button className="btn btn-primary me-2" onClick={handleSendMessage}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
-              <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/>
-            </svg>
-          </button>
-          <button className="btn btn-secondary" onClick={handleGetChat}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-left-dots-fill" viewBox="0 0 16 16">
-              <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793zm5 4a1 1 0 1 0-2 0 1 1 0 0 0 2 0m4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
-            </svg>
-          </button>
+        <div className="col">
+          <div className="card">
+            <div className="card-header">
+              <h5>User 2 Window</h5>
+            </div>
+            <div className="card-body chat-container">
+              {messages.map((message, index) => (
+                <div key={index} className={`message-container ${message.sender === 'user2' ? 'text-right' : 'text-left'}`}>
+                  <div className={`message ${message.sender === 'user2' ? 'sent' : 'received'}`}>
+                    {message.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="card-footer d-flex">
+              <input
+                type="text"
+                className="form-control me-2"
+                placeholder="Type a message..."
+                value={inputUser2}
+                onChange={(e) => setInputUser2(e.target.value)}
+                onKeyPress={handleKeyPressUser2}
+              />
+              <button className="btn btn-primary me-2" onClick={handleSendMessageUser2}>
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="row mt-3">
+        <div className="col">
+          <div className="card">
+            <div className="card-footer d-flex justify-content-center">
+              <button className="btn btn-danger" onClick={handleClearChat}>
+                Clear Chat
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
